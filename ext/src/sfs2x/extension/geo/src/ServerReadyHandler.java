@@ -19,18 +19,20 @@ import com.smartfoxserver.v2.extensions.ISFSExtension;
 
 public class ServerReadyHandler extends BaseServerEventHandler {
 
+	private IDBManager db;
 	@Override
 	public void handleServerEvent(ISFSEvent event) throws SFSException {
-		// TODO Auto-generated method stub
+		db = getParentExtension().getParentZone().getDBManager();
 		initRoomVars();
 	}
 
 	private void initRoomVars() {
 		trace("*** Init game session ***");
+		db = getParentExtension().getParentZone().getDBManager();
 		
 		try 
 		{
-			loadSession(1);
+			restoreSession();
 		} 
 		catch (SQLException e)
 		{
@@ -47,17 +49,16 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 		trace("Session id: " + sessionId);
 		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
 		ISFSExtension ext = getParentExtension();
+		varsArr.add(new SFSRoomVariable("sessionId",sessionId));
 		
 		try
 		{
-			IDBManager db = getParentExtension().getParentZone().getDBManager();
-			
 			//reset scan data
-			dropTable("geo.scan_data",db);
+			dropTable("geo.scan_data");
 			varsArr.add(new SFSRoomVariable("scanData", new SFSArray()));
 			
 			//reset scan requests data
-			dropTable("geo.scan_requests",db);
+			dropTable("geo.scan_requests");
 			varsArr.add(new SFSRoomVariable("scanRequests", new SFSArray()));
 			
 			//restore map
@@ -76,54 +77,50 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 		}
 	}
 	
-	private void dropTable(String tableName, IDBManager db) throws SQLException
+	private void dropTable(String tableName) throws SQLException
 	{
 		String sql = "DELETE FROM "+tableName;
 		db.executeUpdate(sql, new Object[] {});
 	}
-/*	
-	private SFSRoomVariable setupSessionId(IDBManager db) throws SQLException
+	
+	private void restoreSession() throws SQLException
 	{
-		try
+		int sessionId;
+		String sql = "SELECT session_id FROM geo.sessions LIMIT 1";
+        ISFSArray activeSessions = db.executeQuery(sql, new Object[] {});
+        
+		if(activeSessions != null  && activeSessions.size()>0)
+        {
+			sessionId = activeSessions.getInt(0);
+			loadSession(sessionId);
+        }
+		else
 		{
-			int mapId;
-			String sql = "SELECT session_id FROM geo.sessions LIMIT 1";
-	        ISFSArray activeSessions = db.executeQuery(sql, new Object[] {});
-	        
-			if(activeSessions != null  && activeSessions.size()>0)
-	        {
-				mapId = activeSessions.getInt(0);
-	        }
-	        else
-	        {
-	        	//if no active session add random to active_sessoins table
-	        	sql = "SELECT id FROM geo.sessions ORDER BY RAND() LIMIT 1";
-	        	mapId = db.executeQuery(sql, new Object[] {}).getInt(0);
-	        	
-	        	sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
-	        	Object[] params = new Object[]{mapId};
-	        	db.executeInsert(sql, params);
-	        }
-	        
-	        trace("map_id: " +mapId);
-	        SFSRoomVariable sessionIdVar = new SFSRoomVariable("sessionId",mapId);
-	        return sessionIdVar;
-		}
-        catch (SQLException e)
-		{
-        	e.printStackTrace();
-			throw e;
+			nextSession();
 		}
 	}
 	
-	*/
+	private void nextSession() throws SQLException
+	{
+		int sessonId;
+		//if no active session add random to active_sessoins table
+    	String sql = "SELECT id FROM geo.sessions ORDER BY RAND() LIMIT 1";
+    	sessonId = db.executeQuery(sql, new Object[] {}).getInt(0);
+    	
+    	sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
+    	Object[] params = new Object[]{sessonId};
+    	db.executeInsert(sql, params);
+    	
+    	loadSession(sessonId);
+	}
+	
+	
 	
 	private SFSObject generateMap(int mapId)
 	{
 		int w = 31;
 		int h = 17;
 
-		IDBManager db = getParentExtension().getParentZone().getDBManager();
 		String sql = "SELECT * FROM geo.map_data WHERE(map_id=?)";
 		
 		SFSObject mapData = new SFSObject();
