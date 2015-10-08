@@ -20,12 +20,13 @@ import com.smartfoxserver.v2.extensions.ISFSExtension;
 
 public class ServerReadyHandler extends BaseServerEventHandler {
 
-	private static String MAP_DATA_VAR = "mapVars";
+	private static String MAP_DATA_VAR = "mapData";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
 	
 	private IDBManager db;
 	private ISFSExtension ext;
+	
 	
 	@Override
 	public void handleServerEvent(ISFSEvent event) throws SFSException
@@ -88,13 +89,10 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 			varsArr.add(new SFSRoomVariable(SCAN_REQUEST_DATA_VAR, new SFSArray()));
 			
 			//restore map
-			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, generateMap(sessionId));
-			mapVar.setPrivate(true);
-			mapVar.setHidden(false);
-			varsArr.add(mapVar);
+			varsArr.add(loadMapData(sessionId));
 			
 			//push them all
-			getApi().setRoomVariables(mapVar.getOwner(), ext.getParentRoom(), varsArr);
+			getApi().setRoomVariables(varsArr.get(0).getOwner(), ext.getParentRoom(), varsArr);
 		}
 		catch (SQLException e)
 		{
@@ -106,7 +104,7 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 	private void dropTable(String tableName) throws SQLException
 	{
 		String sql = "DELETE FROM "+tableName;
-		db.executeUpdate(sql, new Object[] {});
+		db.executeUpdate(sql, null);
 	}
 	
 	private void restoreSession(int sessionId) throws SQLException
@@ -127,13 +125,10 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 			varsArr.add(new SFSRoomVariable(SCAN_REQUEST_DATA_VAR, scanRequests));
 			
 			//restore map
-			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, generateMap(sessionId));
-			mapVar.setPrivate(true);
-			mapVar.setHidden(false);
-			varsArr.add(mapVar);
+			varsArr.add(loadMapData(sessionId));
 			
 			//push them all
-			getApi().setRoomVariables(mapVar.getOwner(), ext.getParentRoom(), varsArr);
+			getApi().setRoomVariables(varsArr.get(0).getOwner(), ext.getParentRoom(), varsArr);
 		}
 		catch (SQLException e)
 		{
@@ -148,7 +143,7 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 		int mapId;
 		
     	String sql = "SELECT id FROM geo.maps ORDER BY RAND() LIMIT 1";
-    	ISFSArray res= db.executeQuery(sql, new Object[] {});
+    	ISFSArray res= db.executeQuery(sql, null);
     	
     	trace("res = "+res);
     	
@@ -162,7 +157,7 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 	
 	
 	
-	private SFSObject generateMap(int mapId)
+	private SFSRoomVariable loadMapData(int mapId)
 	{
 		int w = 31;
 		int h = 17;
@@ -197,6 +192,11 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 				 
 				 cellArr.add(cell.getInt("cell_x")*w+cell.getInt("cell_y"), cell.getDouble("value"));	
 			}
+			
+			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, mapData);
+			mapVar.setPrivate(true);
+			mapVar.setHidden(false);
+			return mapVar;
 		}
 		catch (SQLException e) 
 		{
@@ -204,7 +204,7 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 			trace(ExtensionLogLevel.WARN, "SQL Failed: " + e.toString());
 		}
 		
-		return mapData;
+		return null;
 	}
 	
 }
