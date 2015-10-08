@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.smartfoxserver.v2.core.ISFSEvent;
 import com.smartfoxserver.v2.db.IDBManager;
+import com.smartfoxserver.v2.entities.Room;
 import com.smartfoxserver.v2.entities.data.ISFSArray;
 import com.smartfoxserver.v2.entities.data.ISFSObject;
 import com.smartfoxserver.v2.entities.data.SFSArray;
@@ -24,14 +25,19 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
 	
 	private IDBManager db;
+	private ISFSExtension ext;
 	
 	@Override
-	public void handleServerEvent(ISFSEvent event) throws SFSException {
-		db = getParentExtension().getParentZone().getDBManager();
+	public void handleServerEvent(ISFSEvent event) throws SFSException
+	{
+		ext = getParentExtension();
+		db = ext.getParentZone().getDBManager();
+		
 		initRoomVars();
 	}
 
-	private void initRoomVars() {
+	private void initRoomVars() 
+	{
 		trace("*** Init game session ***");
 		
 		try 
@@ -70,21 +76,19 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 	{
 		trace("Session id: " + sessionId);
 		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
-		ISFSExtension ext = getParentExtension();
-		varsArr.add(new SFSRoomVariable("sessionId",sessionId));
-		
+	
 		try
 		{
 			//reset scan data
 			dropTable("geo.scan_data");
-			varsArr.add(new SFSRoomVariable("scanData", new SFSArray()));
+			varsArr.add(new SFSRoomVariable(SCAN_DATA_VAR, new SFSArray()));
 			
 			//reset scan requests data
 			dropTable("geo.scan_requests");
-			varsArr.add(new SFSRoomVariable("scanRequests", new SFSArray()));
+			varsArr.add(new SFSRoomVariable(SCAN_REQUEST_DATA_VAR, new SFSArray()));
 			
 			//restore map
-			SFSRoomVariable mapVar = new SFSRoomVariable("mapData", generateMap(sessionId));
+			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, generateMap(sessionId));
 			mapVar.setPrivate(true);
 			mapVar.setHidden(false);
 			varsArr.add(mapVar);
@@ -105,28 +109,25 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 		db.executeUpdate(sql, new Object[] {});
 	}
 	
-	
 	private void restoreSession(int sessionId) throws SQLException
 	{
 		trace("restore session id: " + sessionId);
 		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
-		ISFSExtension ext = getParentExtension();
-		varsArr.add(new SFSRoomVariable("sessionId",sessionId));
 		
 		try
 		{
-			//reset scan data
+			//restore scan data
 			String sql ="SELECT * FROM geo.scan_data";
 			ISFSArray scanData = db.executeQuery(sql,null);
-			varsArr.add(new SFSRoomVariable("scanData", scanData));
+			varsArr.add(new SFSRoomVariable(SCAN_DATA_VAR, scanData));
 			
-			//reset scan requests data
+			//restore scan requests data
 			sql ="SELECT * FROM geo.scan_requests";
 			ISFSArray scanRequests = db.executeQuery(sql,null);
-			varsArr.add(new SFSRoomVariable("scanRequests", scanRequests));
+			varsArr.add(new SFSRoomVariable(SCAN_REQUEST_DATA_VAR, scanRequests));
 			
 			//restore map
-			SFSRoomVariable mapVar = new SFSRoomVariable("mapData", generateMap(sessionId));
+			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, generateMap(sessionId));
 			mapVar.setPrivate(true);
 			mapVar.setHidden(false);
 			varsArr.add(mapVar);
