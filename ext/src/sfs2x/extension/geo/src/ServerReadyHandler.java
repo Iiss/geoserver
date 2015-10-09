@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.smartfoxserver.v2.core.ISFSEvent;
 import com.smartfoxserver.v2.db.IDBManager;
-import com.smartfoxserver.v2.entities.Room;
 import com.smartfoxserver.v2.entities.data.ISFSArray;
 import com.smartfoxserver.v2.entities.data.ISFSObject;
 import com.smartfoxserver.v2.entities.data.SFSArray;
@@ -23,6 +22,8 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 	private static String MAP_DATA_VAR = "mapData";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
+	private static String SCAN_DATA_TABLE = "geo.scan_data";
+	private static String SCAN_REQUEST_DATA_TABLE = "geo.scan_requests";
 	
 	private IDBManager db;
 	private ISFSExtension ext;
@@ -80,13 +81,9 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 	
 		try
 		{
-			//reset scan data
-			dropTable("geo.scan_data");
-			varsArr.add(new SFSRoomVariable(SCAN_DATA_VAR, new SFSArray()));
-			
-			//reset scan requests data
-			dropTable("geo.scan_requests");
-			varsArr.add(new SFSRoomVariable(SCAN_REQUEST_DATA_VAR, new SFSArray()));
+			//reset cache tables
+			varsArr.add(dropTable(SCAN_DATA_TABLE,SCAN_DATA_VAR));
+			varsArr.add(dropTable(SCAN_REQUEST_DATA_TABLE,SCAN_REQUEST_DATA_VAR));
 			
 			//restore map
 			varsArr.add(loadMapData(sessionId));
@@ -107,6 +104,18 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 		db.executeUpdate(sql, null);
 	}
 	
+	private SFSRoomVariable dropTable(String tableName, String varName) throws SQLException
+	{
+		dropTable(tableName);
+		return new SFSRoomVariable(varName, new SFSArray());
+	}
+	
+	private SFSRoomVariable restoreTable(String tableName, String varName) throws SQLException
+	{
+		String sql ="SELECT * FROM "+tableName;
+		ISFSArray res = db.executeQuery(sql,null);
+		return new SFSRoomVariable(varName, res);
+	}
 	private void restoreSession(int sessionId) throws SQLException
 	{
 		trace("restore session id: " + sessionId);
@@ -114,15 +123,9 @@ public class ServerReadyHandler extends BaseServerEventHandler {
 		
 		try
 		{
-			//restore scan data
-			String sql ="SELECT * FROM geo.scan_data";
-			ISFSArray scanData = db.executeQuery(sql,null);
-			varsArr.add(new SFSRoomVariable(SCAN_DATA_VAR, scanData));
-			
-			//restore scan requests data
-			sql ="SELECT * FROM geo.scan_requests";
-			ISFSArray scanRequests = db.executeQuery(sql,null);
-			varsArr.add(new SFSRoomVariable(SCAN_REQUEST_DATA_VAR, scanRequests));
+			//restore cache tables
+			varsArr.add(restoreTable(SCAN_DATA_TABLE, SCAN_DATA_VAR));
+			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
 			
 			//restore map
 			varsArr.add(loadMapData(sessionId));
