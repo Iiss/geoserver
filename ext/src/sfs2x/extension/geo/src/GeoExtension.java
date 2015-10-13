@@ -56,6 +56,61 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	}
 	
 	
+	public void nextSession() throws SQLException
+	{
+		try
+		{
+			int mapId;
+			
+	    	String sql = "SELECT id FROM geo.maps ORDER BY RAND() LIMIT 1";
+	    	ISFSArray res= db.executeQuery(sql, null);
+	    	
+	    	mapId = res.getSFSObject(0).getInt("id");
+	    	sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
+	    	Object[] params = new Object[]{mapId};
+	    	db.executeInsert(sql, params);
+	    	
+	    	loadSession(mapId);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	
+	public void addScanRequest(int x, int y, int layerId) throws SQLException
+	{
+		try
+		{
+			String sql = "INSERT INTO geo.scan_requests (cell_x, cell_y, layer_id) VALUES (?,?,?)";
+			Object[] params = new Object[]{x,y,layerId};
+	    	db.executeInsert(sql, params);
+	    	
+	    	RoomVariable reqStack = getParentRoom().getVariable(SCAN_REQUEST_DATA_VAR);
+	    	
+	    	if(reqStack != null)
+	    	{
+	    		ISFSObject reqData = new SFSObject();
+	    		reqData.putInt("x", x);
+	    		reqData.putInt("y", y);
+	    		reqData.putInt("layer_id", layerId);
+	    		reqStack.getSFSArrayValue().addSFSObject(reqData);
+	    		
+	    		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+	    		varsArr.add(reqStack);
+	    		getApi().setRoomVariables(reqStack.getOwner(), getParentRoom(), varsArr);
+	    		
+	    	}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
 	private void initSession() throws SQLException
 	{
 		int mapId;
@@ -130,41 +185,47 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
 	private void dropTable(String tableName) throws SQLException
 	{
-		String sql = "DELETE FROM "+tableName;
-		db.executeUpdate(sql, null);
+		try
+		{
+			String sql = "DELETE FROM "+tableName;
+			db.executeUpdate(sql, null);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	
 	private SFSRoomVariable dropTable(String tableName, String varName) throws SQLException
 	{
-		dropTable(tableName);
-		return new SFSRoomVariable(varName, new SFSArray());
+		try
+		{
+			dropTable(tableName);
+			return new SFSRoomVariable(varName, new SFSArray());
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	
 	private SFSRoomVariable restoreTable(String tableName, String varName) throws SQLException
 	{
-		String sql ="SELECT * FROM "+tableName;
-		ISFSArray res = db.executeQuery(sql,null);
-		return new SFSRoomVariable(varName, res);
-	}
-	
-	
-	public void nextSession() throws SQLException
-	{
-		int mapId;
-		
-    	String sql = "SELECT id FROM geo.maps ORDER BY RAND() LIMIT 1";
-    	ISFSArray res= db.executeQuery(sql, null);
-    	
-    	trace("res = "+res);
-    	
-    	mapId = res.getSFSObject(0).getInt("id");
-    	sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
-    	Object[] params = new Object[]{mapId};
-    	db.executeInsert(sql, params);
-    	
-    	loadSession(mapId);
+		try
+		{
+			String sql ="SELECT * FROM "+tableName;
+			ISFSArray res = db.executeQuery(sql,null);
+			return new SFSRoomVariable(varName, res);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
 	}
 	
 	
@@ -216,7 +277,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		
 		return null;
 	}
-	
 	
 	/** {@inheritDoc} */
 	@Override
