@@ -17,6 +17,7 @@ import com.smartfoxserver.v2.entities.variables.RoomVariable;
 import com.smartfoxserver.v2.entities.variables.SFSRoomVariable;
 
 import sfs2x.extension.geo.src.ServerReadyHandler;
+import sfs2x.extension.geo.src.SessionRequestHandler;
 
 public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
@@ -34,7 +35,8 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		trace("*** Init geo extension ***");
 		trace("Room: "+getParentRoom().getName());
 		
-		addEventHandler(SFSEventType.SERVER_READY, new ServerReadyHandler());	
+		addEventHandler(SFSEventType.SERVER_READY, new ServerReadyHandler());
+		addRequestHandler("game", SessionRequestHandler.class);
 	}
 	
 	
