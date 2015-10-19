@@ -24,9 +24,11 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String MAP_DATA_VAR = "mapData";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
+	private static String LAYERS_DATA_VAR = "layers";
 	private static String SCAN_DATA_TABLE = "geo.scan_data";
 	private static String SCAN_REQUEST_DATA_TABLE = "geo.scan_requests";
-	
+	private static String LAYERS_DATA_TABLE = "geo.layers";
+
 	private IDBManager db;
 	
 	/** {@inheritDoc} */
@@ -146,6 +148,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			varsArr.add(dropTable(SCAN_REQUEST_DATA_TABLE,SCAN_REQUEST_DATA_VAR));
 			
 			//restore map
+			varsArr.add(setupLayers());
 			varsArr.add(loadMapData(sessionId));
 			
 			//push them all
@@ -171,6 +174,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
 			
 			//restore map
+			varsArr.add(setupLayers());
 			varsArr.add(loadMapData(sessionId));
 			
 			//push them all
@@ -280,6 +284,19 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		return null;
 	}
 	
+	private SFSRoomVariable setupLayers() throws SQLException
+	{
+		try
+		{
+			return restoreTable(LAYERS_DATA_TABLE,LAYERS_DATA_VAR);
+		}
+		catch (SQLException e) 
+		{
+			trace(ExtensionLogLevel.WARN, "SQL Failed: " + e.toString());
+		}
+		
+		return null;
+	}
 	/** {@inheritDoc} */
 	@Override
 	public void destroy()
