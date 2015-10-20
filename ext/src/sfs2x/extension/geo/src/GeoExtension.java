@@ -21,7 +21,8 @@ import sfs2x.extension.geo.src.SessionRequestHandler;
 
 public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
-	private static String MAP_DATA_VAR = "mapData";
+	//private static String MAP_DATA_VAR = "mapData";
+	private static String MAP_INFO_DATA_VAR = "mapInfo";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
 	private static String LAYERS_DATA_VAR = "layers";
@@ -65,16 +66,18 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		try
 		{
 			int mapId;
+			ISFSObject map;
 			
 	    	String sql = "SELECT id FROM geo.maps ORDER BY RAND() LIMIT 1";
 	    	ISFSArray res= db.executeQuery(sql, null);
 	    	
-	    	mapId = res.getSFSObject(0).getInt("id");
+	    	map = res.getSFSObject(0);
+	    	mapId = map.getInt("id");
 	    	sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
 	    	Object[] params = new Object[]{mapId};
 	    	db.executeInsert(sql, params);
 	    	
-	    	loadSession(mapId);
+	    	loadSession(map);
 		}
 		catch (SQLException e)
 		{
@@ -136,9 +139,9 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	//
 	// Load new Session
 	//
-	private void loadSession(int sessionId) throws SQLException
+	private void loadSession(ISFSObject mapObj) throws SQLException
 	{
-		trace("Session id: " + sessionId);
+		trace("Session id: " + mapObj.getInt("id"));
 		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
 	
 		try
@@ -149,7 +152,8 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			
 			//restore map
 			varsArr.add(setupLayers());
-			varsArr.add(loadMapData(sessionId));
+			varsArr.add(new SFSRoomVariable(MAP_INFO_DATA_VAR, mapObj));
+	//		varsArr.add(loadMapData(sessionId));
 			
 			//push them all
 			getApi().setRoomVariables(varsArr.get(0).getOwner(), getParentRoom(), varsArr);
@@ -169,13 +173,19 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		
 		try
 		{
+			ISFSObject map;
+			String sql = "SELECT * FROM geo.maps WHERE id=?";
+			ISFSArray res  = db.executeQuery(sql, new Object[]{sessionId});
+			map = res.getSFSObject(0);
+			varsArr.add(new SFSRoomVariable(MAP_INFO_DATA_VAR, map));
+			
 			//restore cache tables
 			varsArr.add(restoreTable(SCAN_DATA_TABLE, SCAN_DATA_VAR));
 			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
 			
 			//restore map
 			varsArr.add(setupLayers());
-			varsArr.add(loadMapData(sessionId));
+	//		varsArr.add(loadMapData(sessionId));
 			
 			//push them all
 			getApi().setRoomVariables(varsArr.get(0).getOwner(), getParentRoom(), varsArr);
@@ -234,6 +244,19 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
+	/*	private ISFSArray raiseTable(String tableName) throws SQLException
+	{
+		try
+		{
+			String sql ="SELECT * FROM "+tableName;
+			return db.executeQuery(sql,null);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
 	
 	private SFSRoomVariable loadMapData(int mapId)
 	{
@@ -283,6 +306,47 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		
 		return null;
 	}
+	
+	private SFSRoomVariable _loadMapData(int mapId)
+	{
+		int w = 32;
+		int h = 18;
+		
+		try
+		{
+			//fill array with empty data
+			SFSArray mapData = new SFSArray();
+			ISFSArray layers  = raiseTable(LAYERS_DATA_TABLE);
+			int i;
+		
+			for(i=0; i < w*h; i++)
+			{
+				//mapData.addSFSObject(SFSObject.);
+			}
+			
+			String sql = "SELECT * FROM geo.map_data WHERE(map_id=?)";
+			ISFSArray cells = db.executeQuery(sql, new Object[] {mapId});
+			
+			for(i=0; i<cells.size(); i++)
+			{
+				 ISFSObject cell = cells.getSFSObject(i);
+				 String layer = cell.getInt("layer_id").toString();
+				 int cx = cell.getInt("cell_x");
+				 int cy = cell.getInt("cell_y");
+			}
+			
+			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, mapData);
+			mapVar.setPrivate(true);
+			mapVar.setHidden(false);
+			return mapVar;	
+		}
+		catch (SQLException e) 
+		{
+			trace(ExtensionLogLevel.WARN, "SQL Failed: " + e.toString());
+		}
+		
+		return null;
+	}*/
 	
 	private SFSRoomVariable setupLayers() throws SQLException
 	{
