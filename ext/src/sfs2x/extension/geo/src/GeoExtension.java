@@ -21,7 +21,7 @@ import sfs2x.extension.geo.src.SessionRequestHandler;
 
 public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
-	//private static String MAP_DATA_VAR = "mapData";
+	private static String MAP_DATA_VAR = "mapData";
 	private static String MAP_INFO_DATA_VAR = "mapInfo";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
@@ -86,7 +86,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	
+
 	public void addScanRequest(int x, int y, int layerId) throws SQLException
 	{
 		try
@@ -100,8 +100,8 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	    	if(reqStack != null)
 	    	{
 	    		ISFSObject reqData = new SFSObject();
-	    		reqData.putInt("x", x);
-	    		reqData.putInt("y", y);
+	    		reqData.putInt("cell_x", x);
+	    		reqData.putInt("cell_y", y);
 	    		reqData.putInt("layer_id", layerId);
 	    		reqStack.getSFSArrayValue().addSFSObject(reqData);
 	    		
@@ -117,6 +117,19 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			throw e;
 		}
 	}
+	
+/*	public Double getScanResult(int x, int y, int layerId) throws SQLException
+	{
+		try
+		{
+			String sql = "SELECT value FROM geo.map_data WHERE(map_id=1 AND id=2)"
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}*/
 	
 	private void initSession() throws SQLException
 	{
@@ -153,7 +166,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			//restore map
 			varsArr.add(setupLayers());
 			varsArr.add(new SFSRoomVariable(MAP_INFO_DATA_VAR, mapObj));
-	//		varsArr.add(loadMapData(sessionId));
+		//	varsArr.add(loadMapData(mapObj));
 			
 			//push them all
 			getApi().setRoomVariables(varsArr.get(0).getOwner(), getParentRoom(), varsArr);
@@ -185,7 +198,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			
 			//restore map
 			varsArr.add(setupLayers());
-	//		varsArr.add(loadMapData(sessionId));
+			//varsArr.add(loadMapData(map));
 			
 			//push them all
 			getApi().setRoomVariables(varsArr.get(0).getOwner(), getParentRoom(), varsArr);
@@ -258,10 +271,11 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	private SFSRoomVariable loadMapData(int mapId)
+	private SFSRoomVariable loadMapData(ISFSObject map)
 	{
-		int w = 31;
-		int h = 17;
+		int mapId = map.getInt("id");
+		int w = map.getInt("width");
+		int h = map.getInt("height");
 
 		String sql = "SELECT * FROM geo.map_data WHERE(map_id=?)";
 		
@@ -307,10 +321,10 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		return null;
 	}
 	
-	private SFSRoomVariable _loadMapData(int mapId)
+	private SFSRoomVariable loadMapData(SFSObject mapObj)
 	{
-		int w = 32;
-		int h = 18;
+		int w = mapObj.getInt("width");
+		int h = mapObj.getInt("height");
 		
 		try
 		{
@@ -318,22 +332,14 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			SFSArray mapData = new SFSArray();
 			ISFSArray layers  = raiseTable(LAYERS_DATA_TABLE);
 			int i;
-		
+			CellBlankModel cellModel = new CellBlankModel(layers);
+			
 			for(i=0; i < w*h; i++)
 			{
-				//mapData.addSFSObject(SFSObject.);
+				mapData.addSFSObject(SFSObject.newFromObject(cellModel));
 			}
 			
-			String sql = "SELECT * FROM geo.map_data WHERE(map_id=?)";
-			ISFSArray cells = db.executeQuery(sql, new Object[] {mapId});
-			
-			for(i=0; i<cells.size(); i++)
-			{
-				 ISFSObject cell = cells.getSFSObject(i);
-				 String layer = cell.getInt("layer_id").toString();
-				 int cx = cell.getInt("cell_x");
-				 int cy = cell.getInt("cell_y");
-			}
+			ISFSArray scanRequests  = raiseTable(LAYERS_DATA_TABLE);
 			
 			SFSRoomVariable mapVar = new SFSRoomVariable(MAP_DATA_VAR, mapData);
 			mapVar.setPrivate(true);
@@ -346,8 +352,8 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 		
 		return null;
-	}*/
-	
+	}
+	*/
 	private SFSRoomVariable setupLayers() throws SQLException
 	{
 		try
