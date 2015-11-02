@@ -44,8 +44,31 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 				_reportError(command,sender,e);
 			}
 		}
+		else if(command.equalsIgnoreCase("probeRequest"))
+		{
+			try 
+			{
+				((IGeoExtension)ext).addProbeRequest(params.getInt("x"), params.getInt("y"));
+				_reportDone(command, sender);
+			} 
+			catch (SQLException e)
+			{
+				_reportError(command,sender,e);
+			}
+		}
+		else if(command.equalsIgnoreCase("scan"))
+		{
+			try 
+			{
+				((IGeoExtension)ext).scan(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
+				_reportDone(command, sender);
+			} 
+			catch (SQLException e)
+			{
+				_reportError(command,sender,e);
+			}
+		}
 		else if(command.equalsIgnoreCase("reportResult")){}
-		else if(command.equalsIgnoreCase("addToFavorites")){}
 		else if(command.equalsIgnoreCase("mine")){}
 
 	}

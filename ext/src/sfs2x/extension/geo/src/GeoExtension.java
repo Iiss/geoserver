@@ -5,6 +5,7 @@ import com.smartfoxserver.v2.extensions.SFSExtension;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.smartfoxserver.v2.core.SFSEventType;
@@ -24,12 +25,17 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String MAP_INFO_DATA_VAR = "mapInfo";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
+	private static String PROBE_REQUEST_DATA_VAR = "probeRequests";
 	private static String LAYERS_DATA_VAR = "layers";
 	private static String SCAN_DATA_TABLE = "geo.scan_data";
 	private static String SCAN_REQUEST_DATA_TABLE = "geo.scan_requests";
 	private static String LAYERS_DATA_TABLE = "geo.layers";
+	private static String PROBE_REQUEST_DATA_TABLE = "geo.probe_requests";
+	private static String MAP_DATA_TABLE = "geo.map_data";
+
 
 	private IDBManager db;
+	private HashMap<String,Double> mapHash;
 	
 	/** {@inheritDoc} */
 	public void init()
@@ -90,7 +96,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	{
 		try
 		{
-			String sql = "INSERT INTO geo.scan_requests (cell_x, cell_y, layer_id) VALUES (?,?,?)";
+			String sql = "INSERT INTO " + SCAN_REQUEST_DATA_TABLE + " (cell_x, cell_y, layer_id) VALUES (?,?,?)";
 			Object[] params = new Object[]{x,y,layerId};
 	    	db.executeInsert(sql, params);
 	    	
@@ -109,6 +115,62 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	    		getApi().setRoomVariables(reqStack.getOwner(), getParentRoom(), varsArr);
 	    		
 	    	}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	public void addProbeRequest(int x, int y) throws SQLException
+	{
+		try
+		{
+			String sql = "INSERT INTO " + PROBE_REQUEST_DATA_TABLE + " (cell_x, cell_y) VALUES (?,?)";
+			Object[] params = new Object[]{x,y};
+	    	db.executeInsert(sql, params);
+	    	
+	    	RoomVariable reqStack = getParentRoom().getVariable(PROBE_REQUEST_DATA_VAR);
+	    	
+	    	if(reqStack != null)
+	    	{
+	    		ISFSObject reqData = new SFSObject();
+	    		reqData.putInt("cell_x", x);
+	    		reqData.putInt("cell_y", y);
+	    		reqStack.getSFSArrayValue().addSFSObject(reqData);
+	    		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+	    		varsArr.add(reqStack);
+	    		getApi().setRoomVariables(reqStack.getOwner(), getParentRoom(), varsArr);
+	    		
+	    	}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	public void scan(int x, int y, int layerId) throws SQLException
+	{
+		try
+		{
+			RoomVariable mapVar = getParentRoom().getVariable(MAP_INFO_DATA_VAR);
+			double value = mapHash.get(getMapHashKey(x,y,layerId));
+			
+			String sql ="DELETE FROM " + SCAN_REQUEST_DATA_TABLE + " WHERE (cell_x=? AND cell_y=? AND layer_id=?)";
+			Object[] params = new Object[]{x, y, layerId};
+			db.executeUpdate(sql, params);
+			
+			sql = "INSERT INTO " + SCAN_DATA_TABLE + " (cell_x,cell_y,layer_id,value) VALUES(?,?,?,?)";
+			params = new Object[]{ x ,y , layerId, value};
+			db.executeInsert(sql, params);
+			
+			List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+			varsArr.add(restoreTable(SCAN_DATA_TABLE, SCAN_DATA_VAR));
+			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
+			getApi().setRoomVariables(mapVar.getOwner(), getParentRoom(), varsArr);
 		}
 		catch (SQLException e)
 		{
@@ -148,10 +210,12 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			//reset cache tables
 			varsArr.add(dropTable(SCAN_DATA_TABLE,SCAN_DATA_VAR));
 			varsArr.add(dropTable(SCAN_REQUEST_DATA_TABLE,SCAN_REQUEST_DATA_VAR));
+			varsArr.add(dropTable(PROBE_REQUEST_DATA_TABLE,PROBE_REQUEST_DATA_VAR));
 			
 			//restore map
 			varsArr.add(setupLayers());
 			varsArr.add(new SFSRoomVariable(MAP_INFO_DATA_VAR, mapObj));
+			hashMap(mapObj.getInt("id"));
 			
 			//push them all
 			getApi().setRoomVariables(varsArr.get(0).getOwner(), getParentRoom(), varsArr);
@@ -180,10 +244,11 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			//restore cache tables
 			varsArr.add(restoreTable(SCAN_DATA_TABLE, SCAN_DATA_VAR));
 			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
+			varsArr.add(restoreTable(PROBE_REQUEST_DATA_TABLE,PROBE_REQUEST_DATA_VAR));
 			
 			//restore map
 			varsArr.add(setupLayers());
-			
+			hashMap(sessionId);
 			//push them all
 			getApi().setRoomVariables(varsArr.get(0).getOwner(), getParentRoom(), varsArr);
 		}
@@ -195,6 +260,42 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		
 	}
 	
+	private void hashMap(int mapId) throws SQLException
+	{
+		mapHash = new HashMap<String, Double>();
+		
+		try
+		{
+			String sql = "SELECT * FROM " + MAP_DATA_TABLE+" WHERE (map_id=?)";
+			ISFSArray res  = db.executeQuery(sql, new Object[]{mapId});
+			
+			int cx,cy,lid;
+			double value;
+			ISFSObject item;
+			String key;
+			
+			for(int i=0; i<res.size(); i++)
+			{
+				item = res.getSFSObject(i);
+				cx = item.getInt("cell_x");
+				cy = item.getInt("cell_y");
+				lid = item.getInt("layer_id");
+				value = item.getDouble("value");
+				key = getMapHashKey(cx,cy,lid);
+				mapHash.put(key, value);
+			}
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	private String getMapHashKey(int cell_x, int cell_y, int layer_id)
+	{
+		return "x"+cell_x+"y"+cell_y+"l"+layer_id;
+	}
 	
 	private void dropTable(String tableName) throws SQLException
 	{
