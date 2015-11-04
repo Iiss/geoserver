@@ -32,6 +32,8 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String LAYERS_DATA_TABLE = "geo.layers";
 	private static String PROBE_REQUEST_DATA_TABLE = "geo.probe_requests";
 	private static String MAP_DATA_TABLE = "geo.map_data";
+	private static String STORAGE_DATA_TABLE = "geo.storage";
+	private static String STORAGE_DATA_VAR = "storage";
 
 
 	private IDBManager db;
@@ -179,6 +181,46 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
+	public void deliverProbe(int x, int y, int rockKey) throws SQLException
+	{
+		try
+		{
+			String sql = "INSERT INTO " + STORAGE_DATA_TABLE + " (cell_x,cell_y,rock_key) VALUES(?,?,?)";
+			Object[] params = new Object[]{x, y, rockKey};
+			db.executeInsert(sql, params);
+			
+			List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+			RoomVariable values = restoreTable(STORAGE_DATA_TABLE, STORAGE_DATA_VAR);
+			varsArr.add(values);
+			getApi().setRoomVariables(values.getOwner(), getParentRoom(), varsArr);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
+	public void assignProbe(int probeId, int kernId) throws SQLException
+	{
+		try
+		{
+			String sql = "UPDATE " + STORAGE_DATA_TABLE + " SET kern_id=? WHERE id=?";
+			Object[] params = new Object[]{kernId, probeId};
+			db.executeUpdate(sql, params);
+			
+			List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+			RoomVariable values = restoreTable(STORAGE_DATA_TABLE, STORAGE_DATA_VAR);
+			varsArr.add(values);
+			getApi().setRoomVariables(values.getOwner(), getParentRoom(), varsArr);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
+	
 	private void initSession() throws SQLException
 	{
 		int mapId;
@@ -211,6 +253,8 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			varsArr.add(dropTable(SCAN_DATA_TABLE,SCAN_DATA_VAR));
 			varsArr.add(dropTable(SCAN_REQUEST_DATA_TABLE,SCAN_REQUEST_DATA_VAR));
 			varsArr.add(dropTable(PROBE_REQUEST_DATA_TABLE,PROBE_REQUEST_DATA_VAR));
+			varsArr.add(dropTable(STORAGE_DATA_TABLE,STORAGE_DATA_VAR));
+			
 			
 			//restore map
 			varsArr.add(setupLayers());
@@ -245,6 +289,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			varsArr.add(restoreTable(SCAN_DATA_TABLE, SCAN_DATA_VAR));
 			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
 			varsArr.add(restoreTable(PROBE_REQUEST_DATA_TABLE,PROBE_REQUEST_DATA_VAR));
+			varsArr.add(restoreTable(STORAGE_DATA_TABLE,STORAGE_DATA_VAR));
 			
 			//restore map
 			varsArr.add(setupLayers());

@@ -15,63 +15,52 @@ import com.smartfoxserver.v2.extensions.SFSExtension;
 @MultiHandler
 public class SessionRequestHandler extends BaseClientRequestHandler {
 
+	
 	@Override
 	public void handleClientRequest(User sender, ISFSObject params)
 	{
 		ISFSExtension ext = getParentExtension();
 		String command = params.getUtfString(SFSExtension.MULTIHANDLER_REQUEST_ID);
 
-		if(command.equalsIgnoreCase("next"))
+		try 
 		{
-			try 
+			if(command.equalsIgnoreCase("next"))
 			{
 				((IGeoExtension)ext).nextSession();
-			} 
-			catch (SQLException e)
-			{
-				trace(ExtensionLogLevel.WARN, e.toString());
 			}
-		}
-		else if(command.equalsIgnoreCase("scanRequest"))
-		{
-			try 
+			else if(command.equalsIgnoreCase("scanRequest"))
 			{
 				((IGeoExtension)ext).addScanRequest(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
 				_reportDone(command, sender);
-			} 
-			catch (SQLException e)
-			{
-				_reportError(command,sender,e);
 			}
-		}
-		else if(command.equalsIgnoreCase("probeRequest"))
-		{
-			try 
+			else if(command.equalsIgnoreCase("probeRequest"))
 			{
 				((IGeoExtension)ext).addProbeRequest(params.getInt("x"), params.getInt("y"));
 				_reportDone(command, sender);
-			} 
-			catch (SQLException e)
-			{
-				_reportError(command,sender,e);
 			}
-		}
-		else if(command.equalsIgnoreCase("scan"))
-		{
-			try 
+			else if(command.equalsIgnoreCase("scan"))
 			{
 				((IGeoExtension)ext).scan(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
 				_reportDone(command, sender);
-			} 
-			catch (SQLException e)
+			}
+			else if(command.equalsIgnoreCase("deliverProbe"))
 			{
-				_reportError(command,sender,e);
+				((IGeoExtension)ext).deliverProbe(params.getInt("x"), params.getInt("y"),  params.getInt("rock_key"));
+				_reportDone(command, sender);
+			}
+			else if(command.equalsIgnoreCase("assignProbe"))
+			{
+				((IGeoExtension)ext).assignProbe(params.getInt("probe_id"),params.getInt("kern_id"));
+				_reportDone(command, sender);
 			}
 		}
-		else if(command.equalsIgnoreCase("reportResult")){}
-		else if(command.equalsIgnoreCase("mine")){}
+		catch (SQLException e)
+		{
+			_reportError(command,sender,e);
+		}
 
 	}
+	
 	
 	private void _reportDone(String cmdName,User sender)
 	{
@@ -79,6 +68,7 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 		obj.putInt("result", 1);
 		send(cmdName,obj,sender);
 	}
+	
 	
 	private void _reportError(String cmdName,User sender, SQLException e)
 	{
