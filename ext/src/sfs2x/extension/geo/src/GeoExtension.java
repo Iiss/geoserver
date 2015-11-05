@@ -37,7 +37,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 
 
 	private IDBManager db;
-	private HashMap<String,Double> mapHash;
+	private HashMap<String,Integer> mapHash;
 	
 	/** {@inheritDoc} */
 	public void init()
@@ -307,15 +307,14 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
 	private void hashMap(int mapId) throws SQLException
 	{
-		mapHash = new HashMap<String, Double>();
+		mapHash = new HashMap<String, Integer>();
 		
 		try
 		{
 			String sql = "SELECT * FROM " + MAP_DATA_TABLE+" WHERE (map_id=?)";
 			ISFSArray res  = db.executeQuery(sql, new Object[]{mapId});
 			
-			int cx,cy,lid;
-			double value;
+			int cx,cy,lid,value;
 			ISFSObject item;
 			String key;
 			
@@ -325,7 +324,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 				cx = item.getInt("cell_x");
 				cy = item.getInt("cell_y");
 				lid = item.getInt("layer_id");
-				value = item.getDouble("value");
+				value = item.getInt("value");
 				key = getMapHashKey(cx,cy,lid);
 				mapHash.put(key, value);
 			}
