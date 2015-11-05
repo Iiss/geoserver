@@ -33,11 +33,6 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 				((IGeoExtension)ext).addScanRequest(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
-			else if(command.equalsIgnoreCase("probeRequest"))
-			{
-				((IGeoExtension)ext).addProbeRequest(params.getInt("x"), params.getInt("y"));
-				_reportDone(command, sender);
-			}
 			else if(command.equalsIgnoreCase("scan"))
 			{
 				((IGeoExtension)ext).scan(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));

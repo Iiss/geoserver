@@ -25,12 +25,10 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String MAP_INFO_DATA_VAR = "mapInfo";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
-	private static String PROBE_REQUEST_DATA_VAR = "probeRequests";
 	private static String LAYERS_DATA_VAR = "layers";
 	private static String SCAN_DATA_TABLE = "geo.scan_data";
 	private static String SCAN_REQUEST_DATA_TABLE = "geo.scan_requests";
 	private static String LAYERS_DATA_TABLE = "geo.layers";
-	private static String PROBE_REQUEST_DATA_TABLE = "geo.probe_requests";
 	private static String MAP_DATA_TABLE = "geo.map_data";
 	private static String STORAGE_DATA_TABLE = "geo.storage";
 	private static String STORAGE_DATA_VAR = "storage";
@@ -112,35 +110,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	    		reqData.putInt("layer_id", layerId);
 	    		reqStack.getSFSArrayValue().addSFSObject(reqData);
 	    		
-	    		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
-	    		varsArr.add(reqStack);
-	    		getApi().setRoomVariables(reqStack.getOwner(), getParentRoom(), varsArr);
-	    		
-	    	}
-		}
-		catch (SQLException e)
-		{
-			e.printStackTrace();
-			throw e;
-		}
-	}
-	
-	public void addProbeRequest(int x, int y) throws SQLException
-	{
-		try
-		{
-			String sql = "INSERT INTO " + PROBE_REQUEST_DATA_TABLE + " (cell_x, cell_y) VALUES (?,?)";
-			Object[] params = new Object[]{x,y};
-	    	db.executeInsert(sql, params);
-	    	
-	    	RoomVariable reqStack = getParentRoom().getVariable(PROBE_REQUEST_DATA_VAR);
-	    	
-	    	if(reqStack != null)
-	    	{
-	    		ISFSObject reqData = new SFSObject();
-	    		reqData.putInt("cell_x", x);
-	    		reqData.putInt("cell_y", y);
-	    		reqStack.getSFSArrayValue().addSFSObject(reqData);
 	    		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
 	    		varsArr.add(reqStack);
 	    		getApi().setRoomVariables(reqStack.getOwner(), getParentRoom(), varsArr);
@@ -252,7 +221,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			//reset cache tables
 			varsArr.add(dropTable(SCAN_DATA_TABLE,SCAN_DATA_VAR));
 			varsArr.add(dropTable(SCAN_REQUEST_DATA_TABLE,SCAN_REQUEST_DATA_VAR));
-			varsArr.add(dropTable(PROBE_REQUEST_DATA_TABLE,PROBE_REQUEST_DATA_VAR));
 			varsArr.add(dropTable(STORAGE_DATA_TABLE,STORAGE_DATA_VAR));
 			
 			
@@ -288,7 +256,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			//restore cache tables
 			varsArr.add(restoreTable(SCAN_DATA_TABLE, SCAN_DATA_VAR));
 			varsArr.add(restoreTable(SCAN_REQUEST_DATA_TABLE, SCAN_REQUEST_DATA_VAR));
-			varsArr.add(restoreTable(PROBE_REQUEST_DATA_TABLE,PROBE_REQUEST_DATA_VAR));
 			varsArr.add(restoreTable(STORAGE_DATA_TABLE,STORAGE_DATA_VAR));
 			
 			//restore map
@@ -324,7 +291,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 				cx = item.getInt("cell_x");
 				cy = item.getInt("cell_y");
 				lid = item.getInt("layer_id");
-				value = item.getInt("value");
+				value = item.getInt("value_id");
 				key = getMapHashKey(cx,cy,lid);
 				mapHash.put(key, value);
 			}
