@@ -40,7 +40,7 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 			}
 			else if(command.equalsIgnoreCase("deliverProbe"))
 			{
-				((IGeoExtension)ext).deliverProbe(params.getInt("x"), params.getInt("y"),  params.getInt("rock_key"));
+				((IGeoExtension)ext).deliverProbe(params.getInt("x"), params.getInt("y"),  params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("assignProbe"))

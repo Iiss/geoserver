@@ -155,10 +155,11 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	public void deliverProbe(int x, int y, int rockKey) throws SQLException
+	public void deliverProbe(int x, int y, int layerId) throws SQLException
 	{
 		try
 		{
+			int rockKey = mapHash.get(getMapHashKey(x, y, layerId));
 			String sql = "INSERT INTO " + STORAGE_DATA_TABLE + " (cell_x,cell_y,rock_key) VALUES(?,?,?)";
 			Object[] params = new Object[]{x, y, rockKey};
 			db.executeInsert(sql, params);
