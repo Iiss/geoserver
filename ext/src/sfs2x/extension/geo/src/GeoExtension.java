@@ -32,6 +32,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String MAP_DATA_TABLE = "geo.map_data";
 	private static String STORAGE_DATA_TABLE = "geo.storage";
 	private static String STORAGE_DATA_VAR = "storage";
+	private static String LOCK_DATA_VAR = "locked";
 
 
 	private IDBManager db;
@@ -55,7 +56,9 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		try 
 		{
 			db = getParentZone().getDBManager();
+			lockSession(true);
 			initSession();
+			lockSession(false);
 		} 
 		catch (SQLException e)
 		{
@@ -70,6 +73,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	{
 		try
 		{
+			lockSession(true);
 			int mapId;
 			ISFSObject map;
 			
@@ -83,6 +87,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	    	db.executeInsert(sql, params);
 	    	
 	    	loadSession(map);
+	    	lockSession(false);
 		}
 		catch (SQLException e)
 		{
@@ -188,6 +193,14 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			e.printStackTrace();
 			throw e;
 		}
+	}
+	
+	private void lockSession(boolean locked)
+	{
+		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+		RoomVariable lockVar = new SFSRoomVariable(LOCK_DATA_VAR,locked);
+		varsArr.add(lockVar);
+		getApi().setRoomVariables(lockVar.getOwner(), getParentRoom(), varsArr);
 	}
 	
 	private void initSession() throws SQLException

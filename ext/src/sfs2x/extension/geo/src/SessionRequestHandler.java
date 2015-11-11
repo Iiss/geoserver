@@ -48,6 +48,10 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 				((IGeoExtension)ext).assignProbe(params.getInt("probe_id"),params.getInt("kern_id"));
 				_reportDone(command, sender);
 			}
+			else if(command.equalsIgnoreCase("ping"))
+			{
+				_reportDone(command, sender);
+			}
 		}
 		catch (SQLException e)
 		{
