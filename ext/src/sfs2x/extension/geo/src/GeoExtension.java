@@ -77,7 +77,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			int mapId;
 			ISFSObject map;
 			
-	    	String sql = "SELECT id FROM geo.maps ORDER BY RAND() LIMIT 1";
+	    	String sql = "SELECT * FROM geo.maps ORDER BY RAND() LIMIT 1";
 	    	ISFSArray res= db.executeQuery(sql, null);
 	    	
 	    	map = res.getSFSObject(0);
