@@ -22,6 +22,7 @@ import sfs2x.extension.geo.src.SessionRequestHandler;
 
 public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
+	private static String SESSIONS_DATA_TABLE = "geo.sessions";
 	private static String MAP_INFO_DATA_VAR = "mapInfo";
 	private static String SCAN_DATA_VAR = "scanData";
 	private static String SCAN_REQUEST_DATA_VAR = "scanRequests";
@@ -74,17 +75,11 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		try
 		{
 			lockSession(true);
-			int mapId;
 			ISFSObject map;
-			
 	    	String sql = "SELECT * FROM geo.maps ORDER BY RAND() LIMIT 1";
 	    	ISFSArray res= db.executeQuery(sql, null);
 	    	
 	    	map = res.getSFSObject(0);
-	    	mapId = map.getInt("id");
-	    	sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
-	    	Object[] params = new Object[]{mapId};
-	    	db.executeInsert(sql, params);
 	    	
 	    	loadSession(map);
 	    	lockSession(false);
@@ -227,16 +222,22 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	//
 	private void loadSession(ISFSObject mapObj) throws SQLException
 	{
-		trace("Session id: " + mapObj.getInt("id"));
+		int mapId = mapObj.getInt("id");
 		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
 	
+		trace("Session id: " + mapId);
+		
 		try
 		{
+			dropTable(SESSIONS_DATA_TABLE);
+	    	String sql = "INSERT INTO `geo`.`sessions` (`map_id`) VALUES (?)";
+	    	Object[] params = new Object[]{mapId};
+	    	db.executeInsert(sql, params);
+			
 			//reset cache tables
 			varsArr.add(dropTable(SCAN_DATA_TABLE,SCAN_DATA_VAR));
 			varsArr.add(dropTable(SCAN_REQUEST_DATA_TABLE,SCAN_REQUEST_DATA_VAR));
 			varsArr.add(dropTable(STORAGE_DATA_TABLE,STORAGE_DATA_VAR));
-			
 			
 			//restore map
 			varsArr.add(setupLayers());
