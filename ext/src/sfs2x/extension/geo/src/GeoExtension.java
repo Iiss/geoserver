@@ -186,8 +186,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	
-	
 	public void toggleLayer(int layerId)//ADMIN method
 	{
 		boolean changed = false;
@@ -208,6 +206,10 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			setVar(LAYERS_DATA_VAR,layers);
 		}
 	}
+	
+	//
+	// Private methods
+	//
 	
 	private void lockSession(boolean locked)
 	{
@@ -231,10 +233,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	
-	//
-	// Load new Session
-	//
 	private void loadSession(ISFSObject mapObj) throws SQLException
 	{
 		int mapId = mapObj.getInt("id");
@@ -268,8 +266,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			throw e;
 		}
 	}
-	
-	
+		
 	private void restoreSession(int sessionId) throws SQLException
 	{
 		trace("restore session id: " + sessionId);
@@ -352,7 +349,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	
 	private SFSRoomVariable dropTable(String tableName, String varName) throws SQLException
 	{
 		try
@@ -366,7 +362,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 			throw e;
 		}
 	}
-	
 	
 	private SFSRoomVariable restoreTable(String tableName, String varName) throws SQLException
 	{

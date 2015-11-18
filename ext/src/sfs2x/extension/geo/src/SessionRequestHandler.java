@@ -25,31 +25,32 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 		{
 			if(command.equalsIgnoreCase("next"))
 			{
-				((IGeoExtension)ext).nextSession();
+				ext.nextSession();
+				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("scanRequest"))
 			{
-				((IGeoExtension)ext).addScanRequest(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
+				ext.addScanRequest(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("scan"))
 			{
-				((IGeoExtension)ext).scan(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
+				ext.scan(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("deliverProbe"))
 			{
-				((IGeoExtension)ext).deliverProbe(params.getInt("x"), params.getInt("y"),  params.getInt("layer_id"));
+				ext.deliverProbe(params.getInt("x"), params.getInt("y"),  params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("assignProbe"))
 			{
-				((IGeoExtension)ext).assignProbe(params.getInt("probe_id"),params.getInt("kern_id"));
+				ext.assignProbe(params.getInt("probe_id"),params.getInt("kern_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("toggleLayer"))
 			{
-				((IGeoExtension)ext).toggleLayer(params.getInt("layer_id"));
+				ext.toggleLayer(params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("ping"))
