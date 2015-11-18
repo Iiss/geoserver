@@ -1,8 +1,5 @@
 package sfs2x.extension.geo.src;
 
-import com.smartfoxserver.v2.extensions.ExtensionLogLevel;
-import com.smartfoxserver.v2.extensions.SFSExtension;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,9 +13,8 @@ import com.smartfoxserver.v2.entities.data.SFSArray;
 import com.smartfoxserver.v2.entities.data.SFSObject;
 import com.smartfoxserver.v2.entities.variables.RoomVariable;
 import com.smartfoxserver.v2.entities.variables.SFSRoomVariable;
-
-import sfs2x.extension.geo.src.ServerReadyHandler;
-import sfs2x.extension.geo.src.SessionRequestHandler;
+import com.smartfoxserver.v2.extensions.ExtensionLogLevel;
+import com.smartfoxserver.v2.extensions.SFSExtension;
 
 public class GeoExtension extends SFSExtension implements IGeoExtension{
 	
@@ -34,7 +30,6 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String STORAGE_DATA_TABLE = "geo.storage";
 	private static String STORAGE_DATA_VAR = "storage";
 	private static String LOCK_DATA_VAR = "locked";
-
 
 	private IDBManager db;
 	private HashMap<String,Integer> mapHash;
@@ -191,12 +186,32 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
+	
+	
+	public void toggleLayer(int layerId)//ADMIN method
+	{
+		boolean changed = false;
+		ISFSArray layers = getParentRoom().getVariable(LAYERS_DATA_VAR).getSFSArrayValue();
+		ISFSObject l;
+		for(int i=0;i<layers.size();i++)
+		{
+			l=layers.getSFSObject(i);
+			if(l.getInt("id")==layerId)
+			{
+				l.putBool("enabled", !l.getBool("enabled"));
+				changed = true;
+			}
+		}
+		
+		if (changed)
+		{
+			setVar(LAYERS_DATA_VAR,layers);
+		}
+	}
+	
 	private void lockSession(boolean locked)
 	{
-		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
-		RoomVariable lockVar = new SFSRoomVariable(LOCK_DATA_VAR,locked);
-		varsArr.add(lockVar);
-		getApi().setRoomVariables(lockVar.getOwner(), getParentRoom(), varsArr);
+		setVar(LOCK_DATA_VAR,locked);
 	}
 	
 	private void initSession() throws SQLException
@@ -368,12 +383,18 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
-	
 	private SFSRoomVariable setupLayers() throws SQLException
 	{
 		try
 		{
-			return restoreTable(LAYERS_DATA_TABLE,LAYERS_DATA_VAR);
+			SFSRoomVariable layers = restoreTable(LAYERS_DATA_TABLE,LAYERS_DATA_VAR);
+			ISFSArray larr = layers.getSFSArrayValue();
+			for(int i=0;i<larr.size();i++)
+			{
+				larr.getSFSObject(i).putBool("enabled", true);
+			}
+			
+			return layers;
 		}
 		catch (SQLException e) 
 		{
@@ -382,6 +403,15 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		
 		return null;
 	}
+	
+	private void setVar(String varName, Object value)
+	{
+		List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+		RoomVariable roomVar = new SFSRoomVariable(varName,value,true,false,false);
+		varsArr.add(roomVar);
+		getApi().setRoomVariables(roomVar.getOwner(), getParentRoom(), varsArr);
+	}
+	
 	/** {@inheritDoc} */
 	@Override
 	public void destroy()

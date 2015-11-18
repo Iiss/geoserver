@@ -10,4 +10,6 @@ public interface IGeoExtension
 	void scan(int x, int y, int layerId) throws SQLException;
 	void deliverProbe(int x, int y, int layerId) throws SQLException;
 	void assignProbe(int probeId, int kernId) throws SQLException;
+	//ADMIN methods
+	void toggleLayer(int layerId);
 }

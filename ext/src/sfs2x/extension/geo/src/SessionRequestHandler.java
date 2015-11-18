@@ -8,7 +8,6 @@ import com.smartfoxserver.v2.entities.data.ISFSObject;
 import com.smartfoxserver.v2.entities.data.SFSObject;
 import com.smartfoxserver.v2.extensions.BaseClientRequestHandler;
 import com.smartfoxserver.v2.extensions.ExtensionLogLevel;
-import com.smartfoxserver.v2.extensions.ISFSExtension;
 import com.smartfoxserver.v2.extensions.SFSExtension;
 
 
@@ -19,7 +18,7 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 	@Override
 	public void handleClientRequest(User sender, ISFSObject params)
 	{
-		ISFSExtension ext = getParentExtension();
+		IGeoExtension ext = (IGeoExtension) getParentExtension();
 		String command = params.getUtfString(SFSExtension.MULTIHANDLER_REQUEST_ID);
 
 		try 
@@ -46,6 +45,11 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 			else if(command.equalsIgnoreCase("assignProbe"))
 			{
 				((IGeoExtension)ext).assignProbe(params.getInt("probe_id"),params.getInt("kern_id"));
+				_reportDone(command, sender);
+			}
+			else if(command.equalsIgnoreCase("toggleLayer"))
+			{
+				((IGeoExtension)ext).toggleLayer(params.getInt("layer_id"));
 				_reportDone(command, sender);
 			}
 			else if(command.equalsIgnoreCase("ping"))
