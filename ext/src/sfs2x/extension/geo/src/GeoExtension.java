@@ -76,7 +76,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		{
 			lockSession(true);
 			ISFSObject map;
-	    	String sql = "SELECT * FROM geo.maps ORDER BY RAND() LIMIT 1";
+	    	String sql = "SELECT * FROM " + MAPS_TABLE + " WHERE NOT is_epic=1 ORDER BY RAND() LIMIT 1";
 	    	ISFSArray res= db.executeQuery(sql, null);
 	    	
 	    	map = res.getSFSObject(0);
@@ -91,6 +91,26 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		}
 	}
 	
+	public void nextSession(int id) throws SQLException
+	{
+		try
+		{
+			lockSession(true);
+			ISFSObject map;
+	    	String sql = "SELECT * FROM " + MAPS_TABLE + " WHERE id=?";
+	    	ISFSArray res= db.executeQuery(sql, new Object[]{id});
+	    	
+	    	map = res.getSFSObject(0);
+	    	
+	    	loadSession(map);
+	    	lockSession(false);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
 
 	public void addScanRequest(int x, int y, int layerId) throws SQLException
 	{
@@ -416,11 +436,11 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	{
 		try
 		{
-			String sql = "SELECT COUNT(id) FROM "+ MAPS_TABLE +" WHERE NOT is_epic";
+			String sql = "SELECT COUNT(id) FROM "+ MAPS_TABLE +" WHERE NOT is_epic=1";
 			ISFSArray res = db.executeQuery(sql, null);
 			RoomVariable commonCnt = new SFSRoomVariable(HAS_COMMON_MAPS_VAR, res.size()>0);
 			
-			sql = "SELECT * FROM "+ MAPS_TABLE +" WHERE is_epic";
+			sql = "SELECT * FROM "+ MAPS_TABLE +" WHERE is_epic=1";
 			res = db.executeQuery(sql, null);
 			RoomVariable epicList = new SFSRoomVariable(EPIC_MAPS_VAR, res);
 			

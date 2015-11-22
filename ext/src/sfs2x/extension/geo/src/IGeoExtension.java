@@ -6,6 +6,7 @@ public interface IGeoExtension
 {
 	void initRoomVars();
 	void nextSession() throws SQLException;
+	void nextSession(int id) throws SQLException;
 	void addScanRequest(int x, int y, int layerId) throws SQLException;
 	void scan(int x, int y, int layerId) throws SQLException;
 	void deliverProbe(int x, int y, int layerId) throws SQLException;

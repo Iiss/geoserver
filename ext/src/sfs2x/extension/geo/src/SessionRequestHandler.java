@@ -28,6 +28,11 @@ public class SessionRequestHandler extends BaseClientRequestHandler {
 				ext.nextSession();
 				_reportDone(command, sender);
 			}
+			else if(command.equalsIgnoreCase("load"))
+			{
+				ext.nextSession(params.getInt("id"));
+				_reportDone(command, sender);
+			}
 			else if(command.equalsIgnoreCase("scanRequest"))
 			{
 				ext.addScanRequest(params.getInt("x"), params.getInt("y"), params.getInt("layer_id"));
