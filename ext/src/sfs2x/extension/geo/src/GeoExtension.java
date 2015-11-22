@@ -27,9 +27,13 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 	private static String SCAN_REQUEST_DATA_TABLE = "geo.scan_requests";
 	private static String LAYERS_DATA_TABLE = "geo.layers";
 	private static String MAP_DATA_TABLE = "geo.map_data";
+	private static String MAPS_TABLE = "geo.maps";
 	private static String STORAGE_DATA_TABLE = "geo.storage";
 	private static String STORAGE_DATA_VAR = "storage";
 	private static String LOCK_DATA_VAR = "locked";
+	private static String HAS_COMMON_MAPS_VAR = "hasCommonMaps";
+	private static String EPIC_MAPS_VAR = "epicMaps";
+	
 
 	private IDBManager db;
 	private HashMap<String,Integer> mapHash;
@@ -53,6 +57,7 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		{
 			db = getParentZone().getDBManager();
 			lockSession(true);
+			defineMapListOptions();
 			initSession();
 			lockSession(false);
 		} 
@@ -407,6 +412,29 @@ public class GeoExtension extends SFSExtension implements IGeoExtension{
 		getApi().setRoomVariables(roomVar.getOwner(), getParentRoom(), varsArr);
 	}
 	
+	private void defineMapListOptions() throws SQLException
+	{
+		try
+		{
+			String sql = "SELECT COUNT(id) FROM "+ MAPS_TABLE +" WHERE NOT is_epic";
+			ISFSArray res = db.executeQuery(sql, null);
+			RoomVariable commonCnt = new SFSRoomVariable(HAS_COMMON_MAPS_VAR, res.size()>0);
+			
+			sql = "SELECT * FROM "+ MAPS_TABLE +" WHERE is_epic";
+			res = db.executeQuery(sql, null);
+			RoomVariable epicList = new SFSRoomVariable(EPIC_MAPS_VAR, res);
+			
+			List<RoomVariable> varsArr = new ArrayList<RoomVariable>();
+			varsArr.add(commonCnt);
+			varsArr.add(epicList);
+			getApi().setRoomVariables(commonCnt.getOwner(), getParentRoom(), varsArr);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+			throw e;
+		}
+	}
 	/** {@inheritDoc} */
 	@Override
 	public void destroy()
